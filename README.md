@@ -1,103 +1,117 @@
-# 🛡️ Financial Fraud Detection (Real-Time Streaming + ML API)
+# Fraud Detection API with XGBoost + MLP + Rules Engine
 
-This project implements a financial fraud detection system that integrates machine learning models, an API service, and a simulated real-time streaming pipeline for detecting potential fraudulent transactions.
-
----
-
-## 📌 Project Highlights
-
-- Used **Credit Card Fraud Detection Dataset** (from Kaggle) to train the model.
-- Trained **Random Forest / XGBoost** models and saved them as `.pkl` files.
-- Deployed the model as a **FastAPI** web service for real-time predictions.
-- Simulated real-time transaction stream processing using Python threads (optionally can use Kafka for more robust systems).
-- The model also uses a **custom rule engine** for fraud detection.
+## 📌 项目简介
+本项目为一个基于 **信用卡交易数据** 的金融欺诈检测系统，集成了多模型预测（XGBoost 与 MLP 融合）、规则引擎（durable_rules）与实时 API 服务（FastAPI）。系统具有良好的可扩展性与可视化监控能力，并支持未来迁移至流处理架构（如 GCP Dataflow + Pub/Sub）。
 
 ---
 
-## 📁 Project Structure
-
-```bash
-financial-fraud/
-├── .ipynb_checkpoints/
-│   └── new-checkpoint.ipynb         # Jupyter notebook checkpoint files
-├── data/                            # Data directory (add your dataset here)
-├── fraud_api_flask.py               # Flask API model service
-├── fraud_fastapi.py                 # FastAPI model service
-├── fraud_detector.pkl               # Trained model (XGBoost / RandomForest)
-├── draw_calculate.py                # Helper functions for calculating metrics
-├── time.py                          # Timer utility for real-time simulation
-├── train_model.py                   # Model training script
-├── .gitattributes                   # Git attributes for large file storage
-└── new.ipynb                        # Jupyter notebook for analysis
-````
+## 🎯 项目目标
+- 精准识别高风险欺诈交易（Recall > 78%，AUC > 0.98）
+- 将模型预测与规则推理融合，提升泛化与可解释性
+- 构建 API 服务端口，支持实时接入与限流保护
+- 支持 Prometheus 监控与 GitHub Actions 自动测试
 
 ---
 
-## 🧪 Model Training
+## 🏗 项目架构
 
-To train the model, run the following script:
-
-```bash
-python train_model.py
+```
+                        ┌──────────────┐
+                        │  Client/Post │
+                        └──────┬───────┘
+                               ↓
+                         ┌─────────────┐
+                         │   FastAPI   │
+                         ├─────────────┤
+                         │XGBoost Model│ ← fraud_detector.pkl
+                         │   +         │
+                         │ MLP Model   │ ← mlp_model.keras + scaler.pkl
+                         ├─────────────┤
+                         │ Rule Engine │ ← durable_rules + tree规则
+                         └──────┬──────┘
+                                ↓
+                        ┌──────────────┐
+                        │   Response   │
+                        └──────────────┘
 ```
 
-This will train the model using the **Credit Card Fraud Detection** dataset and save the trained model as `fraud_detector.pkl`.
+---
+
+## 🧠 模型融合策略
+- **XGBoost**：以 Class 标签训练，设定 scale_pos_weight 平衡类别不均衡；通过验证集确定最佳阈值（F1 最优）
+- **MLP**：构建 2–3 层简单全连接神经网络（Keras），并用 `StandardScaler` 标准化输入特征
+- **融合方式**：
+  ```python
+  final_prob = 0.7 * prob_xgb + 0.3 * prob_mlp
+  ```
 
 ---
 
-## 🚀 Model Service (FastAPI)
+## 🧾 规则引擎集成
+基于 `durable_rules` 实现，涵盖：
+- 金额阈值规则（高风险大额交易）
+- 特征组合规则（如 V17 ↑ 且 V10 ↓）
+- 样本导出的决策树规则翻译（共 14 条）
 
-To run the FastAPI model service, use the following command:
+规则命中信息通过 `rule_engine_result` 字段返回。
 
+---
+
+## 📈 模型评估指标
+- XGBoost AUC: **0.9802**
+- MLP AUC: **0.9724 ~ 0.9774**（2层 / 3层）
+- 最终融合 F1: **0.8603**
+
+---
+
+## 🚀 接口调用示例
 ```bash
-uvicorn fraud_fastapi:app --reload --port 8000
-```
-
-* The API will be available at `http://localhost:8000`.
-* **POST** request: `/predict`
-* Input format:
-
-```json
+POST /predict
 {
-  "V1": ..., "V2": ..., ..., "V28": ..., "Amount": ...
+  "V1": -1.23, ..., "Amount": 100.0
 }
 ```
-
----
-
-## 🔄 Real-Time Simulation
-
-To simulate real-time transaction processing (sending to the model API):
-
-```bash
-python fraud_fastapi.py
-```
-
-Alternatively, if using **Flask**, run the following:
-
-```bash
-python fraud_api_flask.py
-```
-
----
-
-## 📊 Model Response
-
-The model will return the following JSON response:
-
+返回结果：
 ```json
 {
-  "fraud_probability": 0.8743,
+  "is_fraud": 1,
+  "final_fraud_probability": 0.862513,
   "risk_level": "high",
-  "is_fraud": 1
+  "prob_xgb": 0.89,
+  "prob_mlp": 0.77,
+  "rule_engine_result": {"rule": "high_amount", "risk": "medium"}
 }
 ```
 
-* `fraud_probability`: The predicted probability of the transaction being fraudulent.
-* `risk_level`: The risk level ("low", "medium", "high").
-* `is_fraud`: Binary indicator (1 = fraud, 0 = no fraud).
+---
+
+## 📦 模块说明
+| 模块 | 功能 |
+|------|------|
+| `model_api.py` | FastAPI 主服务，融合模型预测与规则引擎 |
+| `rules.py`     | durable_rules 规则定义（金额、组合、树分支） |
+| `dl_mini.py`   | Keras MLP 快速建模与评估脚本 |
+| `kafka_producer.py` / `replay_to_kafka.py` | Kafka 交易流模拟器 |
+| `streaming.py` | Beam 实时流管道（消费 Kafka → 调用 API → Redis 存储） |
+| `draw_calculate.py` | 支持 BigQuery 回测后指标绘图 |
 
 ---
+
+## 🛡️ 系统增强功能
+- `Prometheus` 指标暴露：API 请求量、延迟等（`/metrics`）
+- `slowapi` 限流防护：默认每个 IP 每分钟 ≤ 10 次请求
+- `tenacity` 重试机制：对模型调用失败自动尝试 3 次
+- `Pub/Sub + Beam + Redis` 支持未来迁移至 GCP 流处理
+
+---
+
+## 🧪 后续可扩展方向
+- 使用 Google Pub/Sub 推送实时交易 → Dataflow 调用本服务 → Redis 存储 → BigQuery/Looker 监控准确率
+- 增加更多模型（如 LightGBM、Autoencoder）、置信度融合机制
+- 增加 Flask-Limiter / circuit breaker / 配置化动态规则系统
+
+---
+
 
 ## 📦 Installation
 
@@ -117,8 +131,9 @@ pip install -r requirements.txt
 ---
 
 ## 🧑‍💻 Author
-
 * **Cianna1**
-* GitHub: [@Cianna1](https://github.com/Cianna1)
+- 陈一心 | 智能风控实战 / 模型融合与实时欺诈检测
+- GitHub 项目地址：[https://github.com/Cianna1/financial-fraud-detection](https://github.com/Cianna1/financial-fraud-detection)
+
 
 
