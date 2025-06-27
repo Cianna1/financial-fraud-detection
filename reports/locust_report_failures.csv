@@ -1,0 +1,3 @@
+Method,Name,Error,Occurrences
+POST,/predict,HTTPError('500 Server Error: Internal Server Error for url: /predict'),8
+POST,/predict,HTTPError('429 Client Error: Too Many Requests for url: /predict'),1396

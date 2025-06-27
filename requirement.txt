@@ -1,0 +1,26 @@
+# 基础数据处理
+pandas
+numpy
+joblib
+
+# 可视化
+matplotlib
+seaborn
+
+# 机器学习模型
+scikit-learn
+xgboost
+
+# 模型服务（Flask + FastAPI）
+flask
+fastapi
+uvicorn
+pydantic
+
+# 规则引擎 durable_rules
+durable_rules
+
+# 实时模拟与测试
+requests
+nest_asyncio
+redis
