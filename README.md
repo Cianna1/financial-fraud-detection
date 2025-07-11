@@ -105,7 +105,7 @@ print(response.json())
 ## 性能测试
 使用Locust进行API性能测试：
 ```bash
-locust -f tests/locustfile.py --host=http://localhost:8000
+python -m locust -f tests/locustfile.py --host=http://localhost:8000
 ```
 访问`http://localhost:8089`打开Locust Web界面，设置并发用户数和每秒请求数进行测试。
 
