@@ -86,6 +86,7 @@ python src/ml/dl_mini_v2.py     # 训练MLP模型(v2)
 ### 启动API服务
 ```bash
 uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+or "D:\AppGallery\Downloads\anaconda\envs\fraud39\python.exe" -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### API调用示例
