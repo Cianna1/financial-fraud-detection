@@ -15,9 +15,9 @@ financial-fraud-detection/
 │   ├── mlp_scaler_v2.pkl       # MLP模型(v2)的标准化器
 │   ├── xgboost_pipeline.pkl    # XGBoost模型管道
 │   └── xgboost_threshold.pkl   # XGBoost模型阈值
-├── notebooks/                  # Jupyter笔记本
-│   ├── Untitled.ipynb          # 未命名笔记本
-│   └── new.ipynb               # 新笔记本
+├── notebooks/                  # Jupyter笔记本，因为python之前跑结果太慢了所以用jupyter分步跑，可以加快出结果的速度
+│   ├── Untitled.ipynb          
+│   └── new.ipynb               
 ├── reports/                    # 测试报告
 │   ├── locust_report_exceptions.csv  # Locust异常报告
 │   ├── locust_report_failures.csv    # Locust失败报告
