@@ -133,7 +133,7 @@ python src/stream/streaming.py
 ```
 
 ## 规则引擎
-规则引擎配置位于`src/engine/rules.py`，支持自定义规则：
+规则引擎配置位于`src/engine/rules.py`使用决策树，支持自定义规则：
 ```python
 @when_all(m.V1 < -5, m.Amount > 1000)
 def high_risk_transaction(c):
@@ -148,6 +148,9 @@ def high_risk_transaction(c):
 ## 监控与可视化
 1. 访问`http://localhost:8000/metrics`查看Prometheus指标
 2. 使用Jupyter笔记本运行数据分析：`jupyter notebook notebooks/`
+
+## 神经网络尝试
+尝试融合一到两层神经网络到模型中，但是并没有显著提升，反而评估结果比原来更差，所以选择不采用。
 
 ## 贡献指南
 1. Fork本仓库
