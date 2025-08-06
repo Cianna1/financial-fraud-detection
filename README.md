@@ -86,7 +86,7 @@ python src/ml/dl_mini_v2.py     # 训练MLP模型(v2)
 ### 启动API服务
 ```bash
 uvicorn src.api.main:app --host 0.0.0.0 --port 8000
-or "D:\AppGallery\Downloads\anaconda\envs\fraud39\python.exe" -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+or （你的环境位置）"D:\AppGallery\Downloads\anaconda\envs\fraud39\python.exe" -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### API调用示例
@@ -113,11 +113,22 @@ python -m locust -f tests/locustfile.py --host=http://localhost:8000
 ## 流处理示例
 ### 启动Kafka生产者
 ```bash
+#在对应位置下先启动 Zookeeper
+cd C:\Users\陈一心\kafka_2.13-3.3.1
+bin\windows\zookeeper-server-start.bat config\zookeeper.properties
+#在对应位置下再启动 Kafka Broker
+cd C:\Users\陈一心\kafka_2.13-3.3.1
+bin\windows\kafka-server-start.bat config\server.properties
+#在本地环境启动kafka
 python src/stream/kafka_producer.py
 ```
 
 ### 启动流处理管道
 ```bash
+#在对应位置下启动redis
+cd redis
+redis-server.exe
+#在本地环境启动streaming
 python src/stream/streaming.py
 ```
 
